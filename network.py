@@ -71,6 +71,8 @@ class Node:
         for predecessor in set(self.predecessors):
             self.remove_predecessor(predecessor)
 
+
+
     def __repr__(self):
         return f'[Node: {self.name}]'
 
@@ -166,6 +168,11 @@ class Network:
                 self.delete_edge(edge)
 
         self._validate_structure()  # to be sure if its alright
+
+    def delete_node_merge_edges(self, node: Node):
+        node.prev().successors.add(node.next())
+        node.next().predecessors.add(node.prev())
+        self.delete_node(node)
 
     def _validate_structure(self):
         """
