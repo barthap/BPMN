@@ -4,7 +4,7 @@ from more_itertools import pairwise
 
 import network_factory
 from bpmn_network import alpha_miner
-from csv_importer import from_csv
+from import_handler import import_handler
 from drawing import draw_simple_network
 from filters import filter_edges, filter_events
 
@@ -14,7 +14,7 @@ def lab1_repair_example():
     Przyklad z pierwszych labow z repairem
     Bez bram, tylko filtry
     """
-    repair_example = from_csv('data/repairExample.csv')
+    repair_example = import_handler('data/repairExample.csv')
 
     network = network_factory.from_counter_direct_succession(repair_example.direct_succession,
                                                              repair_example.event_counter)
@@ -90,7 +90,7 @@ def lab2_ex1():
 
 
 def lab2_ex2():
-    repair_example = from_csv('data/repairExample.csv')
+    repair_example = import_handler('data/repairExample.csv')
 
     network = network_factory.from_counter_direct_succession(repair_example.direct_succession,
                                                              repair_example.event_counter)
@@ -113,3 +113,22 @@ def lab2_ex2():
 
     draw_simple_network(bpmn_network, with_numbers=True, auto_show=True,
                         name='repair_lab2', title='Lab 2 Repair BPMN')
+
+
+def lab2_setA_A1():
+    a1_example = import_handler('data/A1.csv', sep=";")
+
+    network = network_factory.from_counter_direct_succession(a1_example.direct_succession,
+                                                             a1_example.event_counter)
+
+    filtered_network = filter_edges(network, threshold=0)
+    filtered_network = filter_events(filtered_network, threshold=0)
+    filtered_network.delete_filtered_out_items()
+
+    bpmn_network = alpha_miner(filtered_network)
+
+    bpmn_network.autodetect_start_nodes()
+    bpmn_network.autodetect_end_nodes()
+
+    draw_simple_network(bpmn_network, with_numbers=True, auto_show=True,
+                        name='A1', title='A1')
