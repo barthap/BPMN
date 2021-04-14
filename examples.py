@@ -95,13 +95,6 @@ def lab2_ex2():
     network = network_factory.from_counter_direct_succession(repair_example.direct_succession,
                                                              repair_example.event_counter)
 
-    # example on how to manually set start/end events
-    for e in repair_example.start_events:
-        network.nodes[e].is_start_node = True
-
-    for e in repair_example.end_events:
-        network.nodes[e].is_end_node = True
-
     # Filtruje najpierw a dopiero potem robie mining, tak latwiej
     # On mówił o innym podejściu ale nie pamiętam
     filtered_network = filter_edges(network, threshold=400)
@@ -110,13 +103,15 @@ def lab2_ex2():
 
     print(filtered_network.are_nodes_parallel('Inform User', 'Test Repair'))
     bpmn_network = alpha_miner(filtered_network)
+    bpmn_network.autodetect_start_nodes()
+    bpmn_network.autodetect_end_nodes()
 
     draw_simple_network(bpmn_network, with_numbers=True, auto_show=True,
                         name='repair_lab2', title='Lab 2 Repair BPMN')
 
 
-def lab2_setA_A1():
-    a1_example = import_handler('data/A1.csv', sep=";")
+def lab2_setA(case: int):
+    a1_example = import_handler('data/A'+str(case)+'.csv', sep=";")
 
     network = network_factory.from_counter_direct_succession(a1_example.direct_succession,
                                                              a1_example.event_counter)
@@ -131,4 +126,4 @@ def lab2_setA_A1():
     bpmn_network.autodetect_end_nodes()
 
     draw_simple_network(bpmn_network, with_numbers=True, auto_show=True,
-                        name='A1', title='A1')
+                        name='A'+str(case), title='A'+str(case))
