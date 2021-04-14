@@ -78,6 +78,7 @@ class Node:
         return f'{self.name} ({self.cnt})'
 
 
+
 class Edge:
     def __init__(self, network: Network, src: Node, target: Node, cnt: int = 0):
         self.network = network
@@ -129,40 +130,6 @@ class Network:
         Gets nodes with `is_end_node = True`
         """
         return set(x for x in self.nodes.values() if x.is_end_node)
-
-    def autodetect_start_nodes(self, update_nodes=True) -> Set[Node]:
-        """
-        Detects starting events based on connections
-        (finds events with no predecessors)
-
-        :param update_nodes: if True, nodes have automatically set `is_start_node = True`
-        :return: found starting nodes
-        """
-        detected = set()
-        for node in self.nodes.values():
-            if len(node.predecessors) == 0:
-                detected.add(node)
-                if update_nodes:
-                    node.is_start_node = True
-
-        return detected
-
-    def autodetect_end_nodes(self, update_nodes=True) -> Set[Node]:
-        """
-        Detects finishing events based on connections
-        (finds events with no successors)
-
-        :param update_nodes: if True, nodes have automatically set `is_end_node = True`
-        :return: found ending nodes
-        """
-        detected = set()
-        for node in self.nodes.values():
-            if len(node.successors) == 0:
-                detected.add(node)
-                if update_nodes:
-                    node.is_end_node = True
-
-        return detected
 
     def delete_node(self, node: Node):
         node.remove_all_successors()

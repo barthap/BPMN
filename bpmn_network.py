@@ -192,6 +192,40 @@ class BPMNNetwork(Network):
             result[node] = self.causalities_for_node(node)
         return result
 
+    def autodetect_start_nodes(self, update_nodes=True) -> Set[Node]:
+        """
+        Detects starting events based on connections
+        (finds events with no predecessors)
+
+        :param update_nodes: if True, nodes have automatically set `is_start_node = True`
+        :return: found starting nodes
+        """
+        detected = set()
+        for node in self.nodes.values():
+            if len(node.predecessors) == 0:
+                detected.add(node)
+                if update_nodes:
+                    node.is_start_node = True
+
+        return detected
+
+    def autodetect_end_nodes(self, update_nodes=True) -> Set[Node]:
+        """
+        Detects finishing events based on connections
+        (finds events with no successors)
+
+        :param update_nodes: if True, nodes have automatically set `is_end_node = True`
+        :return: found ending nodes
+        """
+        detected = set()
+        for node in self.nodes.values():
+            if len(node.successors) == 0:
+                detected.add(node)
+                if update_nodes:
+                    node.is_end_node = True
+
+        return detected
+
 
 def alpha_miner(network: BPMNNetwork) -> BPMNNetwork:
     """
