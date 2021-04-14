@@ -72,13 +72,13 @@ def draw_simple_network(network: Network,
         G.add_edge(edge.src.name, edge.target.name, label=label)
 
     if draw_start_end_circles:
+        G.add_node(f'_start', shape="circle", label="")
         for i, start_evt in enumerate(network.get_start_events()):
-            G.add_node(f'_start_{i}', shape="circle", label="")
-            G.add_edge(f'_start_{i}', start_evt.name)
+            G.add_edge(f'_start', start_evt.name)
 
+        G.add_node(f'_end', shape="circle", label="", penwidth='3')
         for i, end_evt in enumerate(network.get_end_events()):
-            G.add_node(f'_end_{i}', shape="circle", label="", penwidth='3')
-            G.add_edge(end_evt.name, f'_end_{i}')
+            G.add_edge(end_evt.name, f'_end')
 
     G.layout()
     G.draw(f'results/{name}.png', prog='dot')
