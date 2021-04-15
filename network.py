@@ -193,25 +193,33 @@ class Network:
         Inserts dummy before provided node, updates connections.
         """
         dummy = Node(self, name=dummy_name, cnt=0)
-        dummy.predecessors.update(node.predecessors)
-        dummy.successors.update({node})
-        node.predecessors.update({dummy})
+        dummy.type = NodeType.DUMMY
+        dummy.predecessors = set(node.predecessors)
+        dummy.successors = {node}
+        node.predecessors = {dummy}
+        self.nodes[dummy_name] = dummy
 
         self.edges[dummy_name] = {node.name: Edge(self, dummy, node, 0)}
         for d in dummy.predecessors:
+            d.successors.remove(node)
+            d.successors.add(dummy)
             original_cnt = self.edges[d.name][node.name].cnt
             self.edges[d.name][dummy_name] = Edge(self, d, dummy, original_cnt)
             del self.edges[d.name][node.name]
 
     def insert_dummy_after(self, node: Node, dummy_name: str):
         dummy = Node(self, name=dummy_name, cnt=0)
-        dummy.successors.update(node.successors)
-        dummy.predecessors.update({node})
-        node.successors.update({dummy})
+        dummy.type = NodeType.DUMMY
+        dummy.successors = set(node.successors)
+        dummy.predecessors = {node}
+        node.successors = {dummy}
+        self.nodes[dummy_name] = dummy
 
         self.edges[node.name][dummy_name] = Edge(self, node, dummy, 0)
         self.edges[dummy_name] = {}
         for s in dummy.successors:
+            s.predecessors.remove(node)
+            s.predecessors.add(dummy)
             original_cnt = self.edges[node.name][s.name].cnt
             self.edges[dummy_name][s.name] = Edge(self, dummy, s, original_cnt)
             del self.edges[node.name][s.name]
