@@ -2,6 +2,9 @@ import pandas as pd
 from more_itertools import pairwise
 from collections import Counter
 from typing import Set, Dict
+from opyenxes.data_in.XUniversalParser import XUniversalParser
+import more_itertools as itt
+
 
 class Result:
     def __init__(self, direct_succession: Dict[str, Counter],
@@ -18,7 +21,7 @@ class CsvResult(Result):
                  event_counter: Dict[str, int],
                  start_events: Set[str],
                  end_events: Set[str]):
-        super(CsvResult, self).__init__(direct_succession,start_events,end_events)
+        super(CsvResult, self).__init__(direct_succession, start_events, end_events)
         self.event_counter = event_counter
 
 
@@ -31,39 +34,36 @@ def from_csv(filename: str, sep=",") -> CsvResult:
     except Exception:
         df['start'] = pd.to_datetime(df['datetime'])
         dfs = df[['id', 'activity', 'start']]
-        dfs = dfs.rename(columns = {'id': 'Case ID', 'activity': 'Activity', 'start': 'Start Event'}, inplace = False)
-
+        dfs = dfs.rename(columns={'id': 'Case ID', 'activity': 'Activity', 'start': 'Start Event'}, inplace=False)
 
     ev_counter = dfs.groupby(['Activity']).Activity.count()
 
-    dfs = dfs.sort_values(by=['Case ID','Start Event'])\
-      .groupby(['Case ID'])\
-      .agg({'Activity': ';'.join})
+    dfs = dfs.sort_values(by=['Case ID', 'Start Event']) \
+        .groupby(['Case ID']) \
+        .agg({'Activity': ';'.join})
 
     dfs['Count'] = 0
-    dfs = dfs.groupby('Activity', as_index=False).count()\
-      .sort_values(['Count'], ascending=False)\
-      .reset_index(drop=True)
+    dfs = dfs.groupby('Activity', as_index=False).count() \
+        .sort_values(['Count'], ascending=False) \
+        .reset_index(drop=True)
 
     dfs['Trace'] = [trace.split(';') for trace in dfs['Activity']]
 
     w_net = dict()
     ev_start_set = set()
     ev_end_set = set()
-    for index, row in dfs[['Trace','Count']].iterrows():
+    for index, row in dfs[['Trace', 'Count']].iterrows():
         if row['Trace'][0] not in ev_start_set:
-          ev_start_set.add(row['Trace'][0])
+            ev_start_set.add(row['Trace'][0])
         if row['Trace'][-1] not in ev_end_set:
-          ev_end_set.add(row['Trace'][-1])
+            ev_end_set.add(row['Trace'][-1])
         for ev_i, ev_j in pairwise(row['Trace']):
-          if ev_i not in w_net.keys():
-            w_net[ev_i] = Counter()
-          w_net[ev_i][ev_j] += row['Count']
+            if ev_i not in w_net.keys():
+                w_net[ev_i] = Counter()
+            w_net[ev_i][ev_j] += row['Count']
 
     return CsvResult(w_net, ev_counter, ev_start_set, ev_end_set)
 
-from opyenxes.data_in.XUniversalParser import XUniversalParser
-import more_itertools as itt
 
 class XesImport(Result):
     def __init__(self,
@@ -73,6 +73,7 @@ class XesImport(Result):
                  end_events: Set[str]):
         super(XesImport, self).__init__(direct_succession, start_events, end_events)
         self.traces_df = traces
+
 
 def from_xes(filename: str) -> XesImport:
     with open(filename) as log_file:
@@ -90,8 +91,8 @@ def from_xes(filename: str) -> XesImport:
     idx = 0
 
     for uniqueTrace in uniqueTraces:
-      pandasImport.append({"idx": idx, "trace":uniqueTrace, 'count': traceTable.count(uniqueTrace)})
-      idx+=1
+        pandasImport.append({"idx": idx, "trace": uniqueTrace, 'count': traceTable.count(uniqueTrace)})
+        idx += 1
 
     df = pd.DataFrame(pandasImport).set_index("idx").sort_values(['count'], ascending=False) \
         .reset_index(drop=True)
@@ -110,6 +111,7 @@ def from_xes(filename: str) -> XesImport:
             w_net[ev_i][ev_j] += row['count']
 
     return XesImport(df, w_net, ev_start_set, ev_end_set)
+
 
 def import_handler(filename: str, sep=',') -> Result:
     if filename.endswith("csv"):

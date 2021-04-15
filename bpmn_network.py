@@ -194,6 +194,7 @@ class BPMNNetwork(Network):
 
     def autodetect_start_nodes(self, update_nodes=True) -> Set[Node]:
         """
+        @deprecated
         Detects starting events based on connections
         (finds events with no predecessors)
 
@@ -211,6 +212,7 @@ class BPMNNetwork(Network):
 
     def autodetect_end_nodes(self, update_nodes=True) -> Set[Node]:
         """
+        @deprecated
         Detects finishing events based on connections
         (finds events with no successors)
 

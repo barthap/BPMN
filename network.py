@@ -10,7 +10,7 @@ class NodeType(Enum):
 
 
 class Node:
-    def __init__(self, network: Network, name: str, cnt: int = 0, is_start = False, is_end = False):
+    def __init__(self, network: Network, name: str, cnt: int = 0, is_start=False, is_end=False):
         self.network = network
         self.name = name
         self.cnt = cnt
@@ -71,14 +71,11 @@ class Node:
         for predecessor in set(self.predecessors):
             self.remove_predecessor(predecessor)
 
-
-
     def __repr__(self):
         return f'[Node: {self.name}]'
 
     def __str__(self):
         return f'{self.name} ({self.cnt})'
-
 
 
 class Edge:
@@ -180,22 +177,22 @@ class Network:
         """
         for node in self.nodes.values():
             for successor in node.successors:
-                assert node in successor.predecessors,\
+                assert node in successor.predecessors, \
                     f'Net invalid! {successor} not in {node} predecessors, but vice versa!'
                 edge = self.edges[node.name][successor.name]
                 assert edge.src == node and edge.target == successor, f'Edge {edge} doesnt match real network state!'
 
             for predecessor in node.predecessors:
-                assert node in predecessor.successors,\
+                assert node in predecessor.successors, \
                     f'Net invalid! {predecessor} not in {node} successors, but vice versa!'
                 edge = self.edges[predecessor.name][node.name]
                 assert edge.src == predecessor and edge.target == node, f'Edge {edge} doesnt match real network state!'
 
-            if node.is_start_node:
-                assert len(node.predecessors) == 0,\
-                    f'Node {node} is marked as starting, but has precedessors: {node.predecessors}'
-
-            if node.is_end_node:
-                assert len(node.successors) == 0,\
-                    f'Node {node} is marked as ending, but has successors: {node.successors}'
-
+            # ## IF START/END EVENTS ARE PARALLEL, THEN THESE ASSERTIONS ARE NOT VALID
+            # if node.is_start_node:
+            #     assert len(node.predecessors) == 0,\
+            #         f'Node {node} is marked as starting, but has precedessors: {node.predecessors}'
+            #
+            # if node.is_end_node:
+            #     assert len(node.successors) == 0,\
+            #         f'Node {node} is marked as ending, but has successors: {node.successors}'
