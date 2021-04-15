@@ -7,6 +7,7 @@ from typing import List, Dict, Set, Union
 class NodeType(Enum):
     EVENT = 0
     UTILITY = 1
+    DUMMY = 2  # dummy node, not drawable
 
 
 class Node:
@@ -20,6 +21,12 @@ class Node:
         self.is_start_node = is_start
         self.is_end_node = is_end
         self.type = NodeType.EVENT
+
+    def is_event(self):
+        return self.type == NodeType.EVENT
+
+    def is_dummy(self):
+        return self.type == NodeType.DUMMY
 
     def is_split(self) -> bool:
         """
@@ -167,9 +174,47 @@ class Network:
         self._validate_structure()  # to be sure if its alright
 
     def delete_node_merge_edges(self, node: Node):
+        """
+        Given nodes: A->B->C
+        Deletes node B and merges into A->C
+        Deleted node can only have single predecessor and successor
+
+        :param node: Node to delete
+        """
+        edge_cnt = self.edges[node.prev().name][node.name].cnt
+        self.edges[node.prev().name][node.next().name] = Edge(self, node.prev(), node.next(), edge_cnt)
+
         node.prev().successors.add(node.next())
         node.next().predecessors.add(node.prev())
         self.delete_node(node)
+
+    def insert_dummy_before(self, node: Node, dummy_name: str):
+        """
+        Inserts dummy before provided node, updates connections.
+        """
+        dummy = Node(self, name=dummy_name, cnt=0)
+        dummy.predecessors.update(node.predecessors)
+        dummy.successors.update({node})
+        node.predecessors.update({dummy})
+
+        self.edges[dummy_name] = {node.name: Edge(self, dummy, node, 0)}
+        for d in dummy.predecessors:
+            original_cnt = self.edges[d.name][node.name].cnt
+            self.edges[d.name][dummy_name] = Edge(self, d, dummy, original_cnt)
+            del self.edges[d.name][node.name]
+
+    def insert_dummy_after(self, node: Node, dummy_name: str):
+        dummy = Node(self, name=dummy_name, cnt=0)
+        dummy.successors.update(node.successors)
+        dummy.predecessors.update({node})
+        node.successors.update({dummy})
+
+        self.edges[node.name][dummy_name] = Edge(self, node, dummy, 0)
+        self.edges[dummy_name] = {}
+        for s in dummy.successors:
+            original_cnt = self.edges[node.name][s.name].cnt
+            self.edges[dummy_name][s.name] = Edge(self, dummy, s, original_cnt)
+            del self.edges[node.name][s.name]
 
     def _validate_structure(self):
         """

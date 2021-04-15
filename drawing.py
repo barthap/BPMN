@@ -61,7 +61,7 @@ def draw_simple_network(network: Network,
                 label = XOR_LABEL
 
             _draw_utility_node(G, node.name, label)
-        else:
+        elif node.type == NodeType.EVENT:
             label = node.__str__() if with_numbers else node.name
             G.add_node(node.name, label=label)
 
