@@ -3,7 +3,7 @@ from pprint import pprint
 from more_itertools import pairwise
 
 import network_factory
-from bpmn_network import alpha_miner
+from miner import alpha_miner
 from import_handler import import_handler
 from drawing import draw_simple_network
 from filters import filter_edges, filter_events

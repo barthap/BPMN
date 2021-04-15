@@ -8,12 +8,12 @@ if __name__ == '__main__':
     # examples.lab2_example()             # OK
     # examples.lab2_ex1()                 # OK
     # examples.lab2_ex2()                 # !
-    # for i in range (1, 5):             # OK: i=2
-    #     examples.lab2_setA(i)
-    examples.lab2_setA(3)
+    for i in range (1, 5):             # OK: i=2
+        examples.lab2_setA(i)
+    # examples.lab2_setA(3)
 
     """
-    1 - bramy na poczatku/koncu
+    1 - ~bramy na poczatku/koncu~ - JUZ OK
     2 - OK
     3 - 1 + dwie bramy obok siebie
     4 - tu jest jakas petla, nie wiem jak to ma byc
