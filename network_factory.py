@@ -38,7 +38,7 @@ def from_importer(import_result: Result, import_start_end_events=False, autodete
     assert not (import_start_end_events and autodetect_start_end_events), \
         "Choose either importing start/end events or autodetection. You cannot select both!"
 
-    evt_cntr = import_result.event_counter if isinstance(import_result, CsvResult) else None
+    evt_cntr = import_result.ev_counter if isinstance(import_result, CsvResult) else None
     network = from_counter_direct_succession(import_result.direct_succession, evt_cntr)
 
     if import_start_end_events:
@@ -92,6 +92,6 @@ def from_filtered_import(import_res: Result, filtered_direct_succession: Dict[st
                                                                   self_loop_events)
             network.add_node(target, cnt=import_res.ev_counter[src], self_looped=node_insert_parameters[0], and_paralleled_with=node_insert_parameters[1],
                          is_in_two_loop_main=node_insert_parameters[2], in_two_loop_feedback_with=node_insert_parameters[3])
-        network.add_edge(src, target, cnt=import_res.direct_succession[src][target])
+            network.add_edge(src, target, cnt=import_res.direct_succession[src][target])
 
     return network
