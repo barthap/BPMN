@@ -66,7 +66,7 @@ class Node:
         y = next(iter(succ))
         return y in x.successors
 
-    def is_picture3(self) -> bool:
+    def is_two_loop(self) -> bool:
         """
         Checks if event is like B event in situation on pic 3
         :return:

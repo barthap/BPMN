@@ -66,7 +66,7 @@ class NodeTests(unittest.TestCase):
         a = net.nodes['A']
         self.assertTrue(a.is_short_loop())
 
-    def test_picture3(self):
+    def test_two_loop(self):
         net = network_factory.from_simple_direct_succession(test_net_loop3)
         a = net.nodes['A']
         b = net.nodes['B']
