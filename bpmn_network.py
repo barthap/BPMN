@@ -227,3 +227,140 @@ class BPMNNetwork(Network):
                     node.is_end_node = True
 
         return detected
+
+    def build_self_loop(self, node: Node):
+        assert node.is_self_loop(), f'Node {node} is not self loop!'
+
+        # remove self-succession
+        node.remove_successor(node)
+
+        succ1 = next(iter(node.successors))
+
+        self_cnt = self.edges[node.name][node.name].cnt
+        succ_cnt = self.edges[node.name][succ1.name].cnt
+
+        gate = UtilityNode(self, name=f'self_loop_{node.name}')
+        gate.successors = set(node.successors)
+        gate.kind = NodeKind.XOR
+        gate.successors.add(node)
+        gate.predecessors = {node}
+        self.nodes[gate.name] = gate
+
+        self.edges[node.name] = {gate.name: Edge(self, node, gate, cnt=self_cnt+succ_cnt)}
+        self.edges[gate.name] = {
+            succ1.name: Edge(self, gate, succ1, cnt=succ_cnt),
+            node.name: Edge(self, gate, node, cnt=self_cnt)
+        }
+        node.successors = {gate}
+
+    def build_short_loop(self, node: Node):
+        assert node.is_short_loop(), f'Node {node} is not short loop!'
+
+        # remove self-succession and make life easier
+        if node.is_self_loop():
+            node.remove_successor(node)
+
+        pred = node.prev()
+        succ = node.next()
+
+        self_cnt = self.edges[node.name][node.name].cnt
+        succ_cnt = self.edges[node.name][succ.name].cnt
+        pred_cnt = self.edges[pred.name][node.name].cnt
+        over_cnt = self.edges[pred.name][succ.name].cnt
+
+        # Nodes
+        pre_gate = UtilityNode(self, name=f'selfloop_pre_{node.name}')
+        post_gate = UtilityNode(self, name=f'selfloop_post_{node.name}')
+        pre_gate.kind = NodeKind.XOR
+        post_gate.kind = NodeKind.XOR
+        self.nodes[pre_gate.name] = pre_gate
+        self.nodes[post_gate.name] = post_gate
+
+        pre_gate.successors = {post_gate}
+        pre_gate.predecessors = {node, pred}
+        post_gate.predecessors = {pre_gate}
+        post_gate.successors = {succ, node}
+        node.predecessors = {post_gate}
+        node.successors = {pre_gate}
+        pred.successors = {pre_gate}
+        succ.predecessors = {post_gate}
+
+        # Edges
+        del self.edges[node.name]
+        del self.edges[pred.name][node.name]
+        del self.edges[pred.name][succ.name]
+
+        self.edges[pred.name][pre_gate.name] = Edge(self, pred, pre_gate, pred_cnt+over_cnt)
+        self.edges[node.name] = {pre_gate.name: Edge(self, node, pre_gate, succ_cnt)}
+        self.edges[post_gate.name] = {succ.name: Edge(self, post_gate, succ, cnt=over_cnt+succ_cnt),
+                                      node.name: Edge(self, post_gate, node, pred_cnt)
+                                      }
+        self.edges[pre_gate.name] = {
+            post_gate.name: Edge(self, pre_gate, post_gate, over_cnt),
+        }
+
+        self._validate_structure()
+
+    def build_two_loop(self, node: Node):
+        assert node.is_two_loop(), f'Node {node} is not short loop!'
+
+        # remove self-succession and make life easier
+        if node.is_self_loop():
+            node.remove_successor(node)
+
+
+        two = node.next()  # or node.prev(), doesnt matter
+        two.remove_predecessor(node)
+        two.remove_successor(node)
+
+        pred = two.prev()
+        succ = two.next()
+
+        cnts = {
+            pred: { two: self.edges[pred.name][two.name].cnt},
+            two: {  node: self.edges[two.name][node.name].cnt,
+                    succ: self.edges[two.name][succ.name].cnt},
+            node: { two: self.edges[node.name][two.name].cnt}
+        }
+        del self.edges[node.name]
+        del self.edges[two.name]
+        del self.edges[pred.name]
+
+        pre_gate = UtilityNode(self, name=f'twoloop_pre_{node.name}')
+        post_gate = UtilityNode(self, name=f'twoloop_post_{node.name}')
+        pre_gate.kind = NodeKind.XOR
+        post_gate.kind = NodeKind.XOR
+        self.nodes[pre_gate.name] = pre_gate
+        self.nodes[post_gate.name] = post_gate
+
+        pred.successors = {pre_gate}
+        pre_gate.predecessors = {pred, node}
+        pre_gate.successors = {two}
+        two.predecessors = {pre_gate}
+        two.successors = {post_gate}
+        post_gate.predecessors = {two}
+        post_gate.successors = {node, succ}
+        succ.predecessors = {post_gate}
+        node.predecessors = {post_gate}
+        node.successors={pre_gate}
+
+        self.edges[pred.name] = {pre_gate.name: Edge(self, pred, pre_gate, cnt=cnts[pred][two])}
+        self.edges[pre_gate.name] = {two.name: Edge(self, pre_gate, two, cnt=cnts[pred][two] + cnts[node][two])}
+        self.edges[two.name] = {post_gate.name: Edge(self, two, post_gate, cnt=cnts[two][succ] + cnts[two][node])}
+        self.edges[node.name] = {pre_gate.name: Edge(self, node, pre_gate, cnt=cnts[node][two])}
+        self.edges[post_gate.name] = {
+            succ.name: Edge(self, post_gate, succ, cnt=cnts[two][succ]),
+            node.name: Edge(self, post_gate, node, cnt=cnts[two][node])
+        }
+
+        self._validate_structure()
+
+    def process_short_loops(self):
+        nodes = set(self.nodes.values())    # copy to avoid weird errors
+        for node in nodes:
+            if node.is_two_loop():
+                self.build_two_loop(node)
+            elif node.is_short_loop():
+                self.build_short_loop(node)
+            elif node.is_self_loop():
+                self.build_self_loop(node)

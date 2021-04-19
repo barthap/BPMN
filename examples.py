@@ -112,3 +112,46 @@ def lab2_setA(case: int):
 
     draw_simple_network(bpmn_network, with_numbers=True, auto_show=True,
                         name='A'+str(case), title='A'+str(case))
+
+
+def loop1():
+    test_net_loop1 = {
+        'X': {'A'},
+        'A': {'A', 'Y'}
+    }
+    net = network_factory.from_simple_direct_succession(test_net_loop1)
+    net.autodetect_start_nodes()
+    net.autodetect_end_nodes()
+
+    net.process_short_loops()
+
+    draw_simple_network(net, name='self_loop1', title='Self loop')
+
+
+def loop2():
+    test_net_loop2 = {
+        'X': {'A', 'Y'},
+        'A': {'A', 'Y'}
+    }
+    net = network_factory.from_simple_direct_succession(test_net_loop2)
+    net.autodetect_start_nodes()
+    net.autodetect_end_nodes()
+
+    net.process_short_loops()
+
+    draw_simple_network(net, name='short_loop2', title='Short loop (pic 2)')
+
+
+def loop3():
+    test_net_loop3 = {
+        'X': {'A'},
+        'A': {'B', 'Y'},
+        'B': {'A'},
+    }
+    net = network_factory.from_simple_direct_succession(test_net_loop3)
+    net.autodetect_start_nodes()
+    net.autodetect_end_nodes()
+
+    net.process_short_loops()
+
+    draw_simple_network(net, name='loop3', title='Loop (pic 3)')
