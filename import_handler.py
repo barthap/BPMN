@@ -10,22 +10,23 @@ class Result:
     def __init__(self, direct_succession: Dict[str, Counter],
                  start_events: Set[str],
                  end_events: Set[str],
-                 traces_df: pd.DataFrame):
+                 traces_df: pd.DataFrame,
+                 ev_counter: Dict[str, int]):
         self.end_events = end_events
         self.start_events = start_events
         self.direct_succession = direct_succession
         self.traces_df = traces_df
+        self.ev_counter = ev_counter
 
 
 class CsvResult(Result):
     def __init__(self,
                  direct_succession: Dict[str, Counter],
-                 event_counter: Dict[str, int],
                  start_events: Set[str],
                  end_events: Set[str],
-                 traces_df: pd.DataFrame):
-        super(CsvResult, self).__init__(direct_succession, start_events, end_events, traces_df)
-        self.event_counter = event_counter
+                 traces_df: pd.DataFrame,
+                 event_counter: Dict[str, int]):
+        super(CsvResult, self).__init__(direct_succession, start_events, end_events, traces_df, event_counter)
 
 
 def from_csv(filename: str, sep=",") -> CsvResult:
@@ -65,7 +66,7 @@ def from_csv(filename: str, sep=",") -> CsvResult:
                 w_net[ev_i] = Counter()
             w_net[ev_i][ev_j] += row['Count']
 
-    return CsvResult(w_net, ev_counter, ev_start_set, ev_end_set, dfs)
+    return CsvResult(w_net, ev_start_set, ev_end_set, dfs, ev_counter)
 
 
 class XesImport(Result):
@@ -74,8 +75,8 @@ class XesImport(Result):
                  direct_succession: Dict[str, Counter],
                  start_events: Set[str],
                  end_events: Set[str],
-                 traces_df: pd.DataFrame):
-        super(XesImport, self).__init__(direct_succession, start_events, end_events, traces_df)
+                 ev_counter: Dict[str, int]):
+        super(XesImport, self).__init__(direct_succession, start_events, end_events, ev_counter)
         self.traces_df = traces
 
 
@@ -83,12 +84,18 @@ def from_xes(filename: str) -> XesImport:
     with open(filename) as log_file:
         log = XUniversalParser().parse(log_file)[0]
 
+    ev_counter = dict()
+
     traceTable = []
     for trace in log:
         traceString = ""
         for event in trace:
             if event.get_attributes()['lifecycle:transition'].get_value() == "start":
                 traceString = traceString + event.get_attributes()['Activity'].get_value() + ";"
+            if event in ev_counter:
+                ev_counter[event] += 1
+            else:
+                ev_counter[event] = 1
         traceTable.append(traceString[:-1])
     uniqueTraces = list(set(traceTable))
     pandasImport = []
@@ -114,7 +121,7 @@ def from_xes(filename: str) -> XesImport:
                 w_net[ev_i] = Counter()
             w_net[ev_i][ev_j] += row['count']
 
-    return XesImport(df, w_net, ev_start_set, ev_end_set, dfs)
+    return XesImport(df, w_net, ev_start_set, ev_end_set, ev_counter)
 
 
 def import_handler(filename: str, sep=',') -> Result:

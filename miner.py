@@ -20,6 +20,17 @@ def alpha_miner(network: BPMNNetwork) -> BPMNNetwork:
     # to przechowuje je tutaj, żeby mieć z czego zrobić merge
     parallelisms = list()
 
+    '''
+    pseudokod brama brama:
+    
+    predecessors_of_my_successors = set()
+    for successor in self.successors:
+        predecessors_of_my_successors.update(successor.predecessors)
+    
+    if successor.predecessors == predecessors_of_my_successors forall successor in self.successors:
+        merge(predecessors_of_my_successors, temp)
+        split(temp, self.successors)
+    '''
     # #Wychwytywanie połączeń brama-brama:
     # for event, successions in causality.items():
     #     prevs_tables = []

@@ -11,7 +11,7 @@ class NodeType(Enum):
 
 
 class Node:
-    def __init__(self, network: Network, name: str, cnt: int = 0, is_start=False, is_end=False):
+    def __init__(self, network: Network, name: str, cnt: int = 0, is_start=False, is_end=False, and_paralleled_with=None, is_self_looped=False, is_in_two_loop_main=False, in_two_loop_feedback_with=None):
         self.network = network
         self.name = name
         self.cnt = cnt
@@ -21,6 +21,10 @@ class Node:
         self.is_start_node = is_start
         self.is_end_node = is_end
         self.type = NodeType.EVENT
+        self.is_self_looped = is_self_looped
+        self.is_in_two_loop_main = is_in_two_loop_main
+        self.in_two_loop_feedback_with = in_two_loop_feedback_with
+        self.and_paralleled_with = and_paralleled_with
 
     def is_event(self):
         return self.type == NodeType.EVENT
@@ -142,9 +146,9 @@ class Network:
         self.nodes: Dict[str, Node] = {}
         self.edges: Dict[str, Dict[str, Edge]] = {}
 
-    def add_node(self, name: str, cnt=0, overwrite=False, is_start=False, is_end=False):
+    def add_node(self, name: str, cnt=0, overwrite=False, is_start=False, is_end=False, self_looped=False, and_paralleled_with=None, is_in_two_loop_main=False, in_two_loop_feedback_with=None):
         if overwrite or name not in self.nodes:
-            self.nodes[name] = Node(self, name, cnt, is_start, is_end)
+            self.nodes[name] = Node(self, name, cnt, is_start, is_end, is_self_looped=self_looped, and_paralleled_with=and_paralleled_with, is_in_two_loop_main=is_in_two_loop_main, in_two_loop_feedback_with=in_two_loop_feedback_with)
 
     def add_edge(self, src: str, target: str, cnt=0):
         if not (src in self.nodes and target in self.nodes):
