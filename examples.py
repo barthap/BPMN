@@ -91,8 +91,6 @@ def lab2_ex2():
 
     print(filtered_network.are_nodes_parallel('Inform User', 'Test Repair'))
     bpmn_network = alpha_miner(filtered_network)
-    bpmn_network.autodetect_start_nodes()
-    bpmn_network.autodetect_end_nodes()
 
     draw_simple_network(bpmn_network, with_numbers=True, auto_show=True,
                         name='repair_lab2', title='Lab 2 Repair BPMN')

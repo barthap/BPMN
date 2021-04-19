@@ -1,6 +1,7 @@
 from copy import deepcopy
 
 from bpmn_network import NodeKind, BPMNNetwork, UtilityNode, NodeFunction
+from network import NodeType
 
 
 def alpha_miner(network: BPMNNetwork) -> BPMNNetwork:
@@ -56,12 +57,15 @@ def alpha_miner(network: BPMNNetwork) -> BPMNNetwork:
     # Pierwszy for od niego
     for event, successions in causality.items():
         if len(successions) > 1:
+            evt = event
+            if event.is_merge():
+                evt = net.insert_dummy_after(event, f'dummy_after_{event.name}')
             if net.are_all_nodes_parallel(successions):
                 parallelisms += [successions]
                 net.delete_parallelism_from_all(successions)
-                net.insert_split_node_between(event, successions, kind=NodeKind.AND)
+                net.insert_split_node_between(evt, successions, kind=NodeKind.AND)
             else:
-                net.insert_split_node_between(event, successions, kind=NodeKind.XOR)
+                net.insert_split_node_between(evt, successions, kind=NodeKind.XOR)
 
     # Drugi for do niego
     # nie uzywam inv_causality bo mam swoje narzedzia od tego
@@ -74,6 +78,10 @@ def alpha_miner(network: BPMNNetwork) -> BPMNNetwork:
             net.insert_merge_node_between(prevs, node, kind=NodeKind.AND)
         else:
             net.insert_merge_node_between(prevs, node, kind=NodeKind.XOR)
+
+    dummies = set(d for d in net.nodes.values() if d.type == NodeType.DUMMY)
+    for d in dummies:
+        net.delete_node_merge_edges(d)
 
     update_end_events(net, parallelisms)
     update_start_events(net, parallelisms)

@@ -188,7 +188,7 @@ class Network:
         node.next().predecessors.add(node.prev())
         self.delete_node(node)
 
-    def insert_dummy_before(self, node: Node, dummy_name: str):
+    def insert_dummy_before(self, node: Node, dummy_name: str) -> Node:
         """
         Inserts dummy before provided node, updates connections.
         """
@@ -207,7 +207,9 @@ class Network:
             self.edges[d.name][dummy_name] = Edge(self, d, dummy, original_cnt)
             del self.edges[d.name][node.name]
 
-    def insert_dummy_after(self, node: Node, dummy_name: str):
+        return dummy
+
+    def insert_dummy_after(self, node: Node, dummy_name: str) -> Node:
         dummy = Node(self, name=dummy_name, cnt=0)
         dummy.type = NodeType.DUMMY
         dummy.successors = set(node.successors)
@@ -223,6 +225,8 @@ class Network:
             original_cnt = self.edges[node.name][s.name].cnt
             self.edges[dummy_name][s.name] = Edge(self, dummy, s, original_cnt)
             del self.edges[node.name][s.name]
+
+        return dummy
 
     def _validate_structure(self):
         """
