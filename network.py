@@ -43,14 +43,10 @@ class Node:
         return len(filtered) > 1
 
     def is_self_loop(self) -> bool:
-        return self in self.successors
-
-    def is_short_xor_loop(self) -> bool:
-        filter_out_self = lambda x: set(t for t in x if t is not self)
-        if len(filter_out_self(self.successors)) > 1 or len(filter_out_self(self.predecessors)):
-            return False
-
-        return self.next() == self.prev()
+        """
+        Picture 1 - Self is connected to self
+        """
+        return self in self.successors  # and len(self.successors.intersection(self.predecessors)) == 0
 
     def is_short_loop(self) -> bool:
         """
@@ -58,14 +54,30 @@ class Node:
         Given self node as A, detects it its such situation
         X -> Y
         X -> A -> Y
+        X -> A -> A -> Y
         """
         filter_out_self = lambda x: set(t for t in x if t is not self)
-        if len(filter_out_self(self.successors)) > 1 or len(filter_out_self(self.predecessors)):
+        succ = filter_out_self(self.successors)
+        pred = filter_out_self(self.predecessors)
+        if len(succ) != 1 or len(pred) != 1:
             return False
 
-        x = self.prev()
-        y = self.next()
+        x = next(iter(pred))
+        y = next(iter(succ))
         return y in x.successors
+
+    def is_picture3(self) -> bool:
+        """
+        Checks if event is like B event in situation on pic 3
+        :return:
+        """
+        filter_out_self = lambda x: set(t for t in x if t is not self)
+        succ = filter_out_self(self.successors)
+        pred = filter_out_self(self.predecessors)
+        if len(succ) != 1 or len(pred) != 1:
+            return False
+
+        return pred == succ
 
     def next(self) -> Node:
         """
