@@ -9,10 +9,12 @@ import more_itertools as itt
 class Result:
     def __init__(self, direct_succession: Dict[str, Counter],
                  start_events: Set[str],
-                 end_events: Set[str]):
+                 end_events: Set[str],
+                 traces_df: pd.DataFrame):
         self.end_events = end_events
         self.start_events = start_events
         self.direct_succession = direct_succession
+        self.traces_df = traces_df
 
 
 class CsvResult(Result):
@@ -20,8 +22,9 @@ class CsvResult(Result):
                  direct_succession: Dict[str, Counter],
                  event_counter: Dict[str, int],
                  start_events: Set[str],
-                 end_events: Set[str]):
-        super(CsvResult, self).__init__(direct_succession, start_events, end_events)
+                 end_events: Set[str],
+                 traces_df: pd.DataFrame):
+        super(CsvResult, self).__init__(direct_succession, start_events, end_events, traces_df)
         self.event_counter = event_counter
 
 
@@ -62,7 +65,7 @@ def from_csv(filename: str, sep=",") -> CsvResult:
                 w_net[ev_i] = Counter()
             w_net[ev_i][ev_j] += row['Count']
 
-    return CsvResult(w_net, ev_counter, ev_start_set, ev_end_set)
+    return CsvResult(w_net, ev_counter, ev_start_set, ev_end_set, dfs)
 
 
 class XesImport(Result):
@@ -70,8 +73,9 @@ class XesImport(Result):
                  traces: pd.DataFrame,
                  direct_succession: Dict[str, Counter],
                  start_events: Set[str],
-                 end_events: Set[str]):
-        super(XesImport, self).__init__(direct_succession, start_events, end_events)
+                 end_events: Set[str],
+                 traces_df: pd.DataFrame):
+        super(XesImport, self).__init__(direct_succession, start_events, end_events, traces_df)
         self.traces_df = traces
 
 
@@ -110,7 +114,7 @@ def from_xes(filename: str) -> XesImport:
                 w_net[ev_i] = Counter()
             w_net[ev_i][ev_j] += row['count']
 
-    return XesImport(df, w_net, ev_start_set, ev_end_set)
+    return XesImport(df, w_net, ev_start_set, ev_end_set, dfs)
 
 
 def import_handler(filename: str, sep=',') -> Result:
