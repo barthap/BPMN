@@ -1,3 +1,4 @@
+import itertools
 from copy import deepcopy
 from enum import Enum
 from math import inf
@@ -136,8 +137,7 @@ class BPMNNetwork(Network):
         del self.edges[node2.name][node1.name]
 
     def delete_parallelism_from_all(self, nodes: Set[Node]):
-        pairs = pairwise(nodes)
-        for node1, node2 in pairs:
+        for node1, node2 in itertools.combinations(nodes, r=2):
             self.delete_parallelism(node1, node2)
 
     def is_causality(self, src: Union[Node, str], target: Union[Node, str]):
