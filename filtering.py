@@ -79,4 +79,4 @@ def filter_network_by_matrices(sd_dict: Dict[str, Dict[str, float]], two_loop_di
                 else:
                     filtered_out_two_loop[out_loop] = dict([(in_loop, value)])
 
-    return filtered_direct_succession, filtered_out_two_loop
+    return filtered_direct_succession, filtered_out_two_loop, parallel_tuples, self_loop_events
