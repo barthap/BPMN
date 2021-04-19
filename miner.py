@@ -12,6 +12,8 @@ def alpha_miner(network: BPMNNetwork) -> BPMNNetwork:
     :return: Zwraca nowa siec z bramami
     """
     net = deepcopy(network)
+    net.process_short_loops()
+
     causality = net.get_causality()
 
     # jako że z sieci usuwam dodane parallel events na bieżąco
@@ -52,8 +54,6 @@ def alpha_miner(network: BPMNNetwork) -> BPMNNetwork:
     #     else:
     #         pass
 
-
-
     # Pierwszy for od niego
     for event, successions in causality.items():
         if len(successions) > 1:
@@ -70,7 +70,7 @@ def alpha_miner(network: BPMNNetwork) -> BPMNNetwork:
     # Drugi for do niego
     # nie uzywam inv_causality bo mam swoje narzedzia od tego
     for node in set(net.nodes.values()):
-        if not node.is_merge(): # to załatwia inv causality
+        if not node.is_merge() or (isinstance(node, UtilityNode) and node.function == NodeFunction.LOOP_GATE):
             continue
 
         prevs = set(node.predecessors) # we need to copy

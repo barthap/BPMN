@@ -4,16 +4,16 @@ import matplotlib.pyplot as plt
 if __name__ == '__main__':
     print('Hello!')
 
-    #examples.lab1_repair_example()      # OK
+    # examples.lab1_repair_example()      # OK
     # examples.lab2_example()             # OK
     # examples.lab2_ex1()                 # OK
     # examples.lab2_ex2()                 # !
-    # for i in range (1, 5):             # OK: i=2
-    #     examples.lab2_setA(i)
+    for i in range (1, 10):             # OK: i=2
+        examples.lab2_setA(i)
     # examples.lab2_setA(3)
-    examples.loop1()
-    examples.loop2()
-    examples.loop3()
+    # examples.loop1()
+    # examples.loop2()
+    # examples.loop3()
 
     """
     1 - ~bramy na poczatku/koncu~ - JUZ OK

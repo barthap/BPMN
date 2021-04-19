@@ -19,6 +19,7 @@ class NodeFunction(Enum):
     ANY = 0
     SPLIT = 1
     MERGE = 2
+    LOOP_GATE = 3
 
 
 class UtilityNode(Node):
@@ -189,7 +190,8 @@ class BPMNNetwork(Network):
         """
         result = {}
         for node in self.nodes.values():
-            result[node] = self.causalities_for_node(node)
+            if node.type == NodeType.EVENT:
+                result[node] = self.causalities_for_node(node)
         return result
 
     def autodetect_start_nodes(self, update_nodes=True) -> Set[Node]:
@@ -257,21 +259,25 @@ class BPMNNetwork(Network):
         assert node.is_short_loop(), f'Node {node} is not short loop!'
 
         # remove self-succession and make life easier
+        self_cnt = 0
         if node.is_self_loop():
             node.remove_successor(node)
+            self_cnt = self.edges[node.name][node.name].cnt
 
         pred = node.prev()
         succ = node.next()
 
-        self_cnt = self.edges[node.name][node.name].cnt
+        #self.insert_dummy_before(pred, f'dummy_before_shortlooped_{node.name}')
+
         succ_cnt = self.edges[node.name][succ.name].cnt
         pred_cnt = self.edges[pred.name][node.name].cnt
         over_cnt = self.edges[pred.name][succ.name].cnt
 
         # Nodes
-        pre_gate = UtilityNode(self, name=f'selfloop_pre_{node.name}')
-        post_gate = UtilityNode(self, name=f'selfloop_post_{node.name}')
+        pre_gate = UtilityNode(self, name=f'shortloop_pre_{node.name}')
+        post_gate = UtilityNode(self, name=f'shortloop_post_{node.name}')
         pre_gate.kind = NodeKind.XOR
+        pre_gate.function = NodeFunction.LOOP_GATE
         post_gate.kind = NodeKind.XOR
         self.nodes[pre_gate.name] = pre_gate
         self.nodes[post_gate.name] = post_gate
@@ -313,18 +319,27 @@ class BPMNNetwork(Network):
         two.remove_predecessor(node)
         two.remove_successor(node)
 
-        pred = two.prev()
-        succ = two.next()
+        self.insert_dummy_before(two, f'dummy_before_looped_{two.name}')
+
+        preds = set(two.predecessors)
+        succs = set(two.successors)
 
         cnts = {
-            pred: { two: self.edges[pred.name][two.name].cnt},
+            'preds': { two: sum(map(lambda p: self.edges[p.name][two.name].cnt, preds))},
             two: {  node: self.edges[two.name][node.name].cnt,
-                    succ: self.edges[two.name][succ.name].cnt},
+                    'succs': sum(map(lambda s: self.edges[two.name][s.name].cnt, succs))},
             node: { two: self.edges[node.name][two.name].cnt}
         }
-        del self.edges[node.name]
+
+        for s in succs:
+            cnts[two][s] = self.edges[two.name][s.name].cnt
+        for p in preds:
+            cnts[p] = {}
+            cnts[p][two] = self.edges[p.name][two.name].cnt
+            del self.edges[p.name][two.name]
         del self.edges[two.name]
-        del self.edges[pred.name]
+        del self.edges[node.name]
+
 
         pre_gate = UtilityNode(self, name=f'twoloop_pre_{node.name}')
         post_gate = UtilityNode(self, name=f'twoloop_post_{node.name}')
@@ -333,25 +348,32 @@ class BPMNNetwork(Network):
         self.nodes[pre_gate.name] = pre_gate
         self.nodes[post_gate.name] = post_gate
 
-        pred.successors = {pre_gate}
-        pre_gate.predecessors = {pred, node}
+        for p in preds:
+            p.successors = {pre_gate}
+
+        pre_gate.predecessors = set(preds)
+        pre_gate.predecessors.add(node)
         pre_gate.successors = {two}
         two.predecessors = {pre_gate}
         two.successors = {post_gate}
         post_gate.predecessors = {two}
-        post_gate.successors = {node, succ}
-        succ.predecessors = {post_gate}
+        post_gate.successors = set(succs)
+        post_gate.successors.add(node)
+
+        for s in succs:
+            s.predecessors = {post_gate}
         node.predecessors = {post_gate}
         node.successors={pre_gate}
 
-        self.edges[pred.name] = {pre_gate.name: Edge(self, pred, pre_gate, cnt=cnts[pred][two])}
-        self.edges[pre_gate.name] = {two.name: Edge(self, pre_gate, two, cnt=cnts[pred][two] + cnts[node][two])}
-        self.edges[two.name] = {post_gate.name: Edge(self, two, post_gate, cnt=cnts[two][succ] + cnts[two][node])}
+        for p in preds:
+            self.edges[p.name][pre_gate.name] = Edge(self, p, pre_gate, cnt=cnts[p][two])
+        self.edges[pre_gate.name] = {two.name: Edge(self, pre_gate, two, cnt=cnts['preds'][two] + cnts[node][two])}
+        self.edges[two.name] = {post_gate.name: Edge(self, two, post_gate, cnt=cnts[two]['succs'] + cnts[two][node])}
         self.edges[node.name] = {pre_gate.name: Edge(self, node, pre_gate, cnt=cnts[node][two])}
-        self.edges[post_gate.name] = {
-            succ.name: Edge(self, post_gate, succ, cnt=cnts[two][succ]),
-            node.name: Edge(self, post_gate, node, cnt=cnts[two][node])
-        }
+        self.edges[post_gate.name] = {}
+        self.edges[post_gate.name][node.name] = Edge(self, post_gate, node, cnt=cnts[two][node])
+        for s in succs:
+            self.edges[post_gate.name][s.name] = Edge(self, post_gate, s, cnt=cnts[two][s])
 
         self._validate_structure()
 
