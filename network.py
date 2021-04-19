@@ -42,6 +42,31 @@ class Node:
         filtered = list(filter(lambda p: p.type == NodeType.EVENT, self.predecessors))
         return len(filtered) > 1
 
+    def is_self_loop(self) -> bool:
+        return self in self.successors
+
+    def is_short_xor_loop(self) -> bool:
+        filter_out_self = lambda x: set(t for t in x if t is not self)
+        if len(filter_out_self(self.successors)) > 1 or len(filter_out_self(self.predecessors)):
+            return False
+
+        return self.next() == self.prev()
+
+    def is_short_loop(self) -> bool:
+        """
+        Checks if this node should be short-looped.
+        Given self node as A, detects it its such situation
+        X -> Y
+        X -> A -> Y
+        """
+        filter_out_self = lambda x: set(t for t in x if t is not self)
+        if len(filter_out_self(self.successors)) > 1 or len(filter_out_self(self.predecessors)):
+            return False
+
+        x = self.prev()
+        y = self.next()
+        return y in x.successors
+
     def next(self) -> Node:
         """
         If node has only one successor, it accesses it
