@@ -165,7 +165,8 @@ def lab3_setB(case: int):
     example = import_handler('data/B'+str(case)+'.csv')
     SD_mat = filtering.calculate_significance_dependency_matrix(example)
     two_loop_mat = filtering.calculate_2loop_matrix(example)
-    filtered_direct_succession, filtered_out_two_loop, parallel_tuples, self_loop_events = filtering.filter_network_by_matrices(SD_mat, two_loop_mat, 0.8)
+    filter_thres = 0.9 if case in [4,5,6,8,9] else 0
+    filtered_direct_succession, filtered_out_two_loop, parallel_tuples, self_loop_events = filtering.filter_network_by_matrices(SD_mat, two_loop_mat, filter_thres)
 
     filtered_network = network_factory.from_filtered_import(example, filtered_direct_succession, filtered_out_two_loop, parallel_tuples, self_loop_events)
 

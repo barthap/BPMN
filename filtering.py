@@ -65,15 +65,19 @@ def filter_network_by_matrices(sd_dict: Dict[str, Dict[str, float]], two_loop_di
         for eventB, value in dictA.items():
             if eventB == eventA:
                 self_loop_events.append(eventB)
-            # TODO
-            elif value == 0:
-                parallel_tuples.append((eventA, eventB))
 
             if threshold <= value:
                 if eventA in filtered_direct_succession:
                     filtered_direct_succession[eventA][eventB] = value
                 else:
                     filtered_direct_succession[eventA] = dict([(eventB, value)])
+
+            try:
+                if abs(sd_dict[eventB][eventA]) >= threshold and abs(sd_dict[eventA][eventB]) >= threshold:
+                    parallel_tuples.append((eventA, eventB))
+            except KeyError:
+                pass
+
 
     for out_loop , dict_out in two_loop_dict.items():
         for in_loop, value in dict_out.items():
