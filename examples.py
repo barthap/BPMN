@@ -2,6 +2,7 @@ from pprint import pprint
 
 from more_itertools import pairwise
 
+import filtering
 import network_factory
 from miner import alpha_miner
 from import_handler import import_handler
@@ -158,3 +159,32 @@ def loop3():
     net = alpha_miner(net)
 
     draw_simple_network(net, name='loop3', title='Loop (pic 3)')
+
+
+def lab3_setB(case: int):
+    example = import_handler('data/B'+str(case)+'.csv')
+    SD_mat = filtering.calculate_significance_dependency_matrix(example)
+    two_loop_mat = filtering.calculate_2loop_matrix(example)
+    filtered_direct_succession, filtered_out_two_loop, parallel_tuples, self_loop_events = filtering.filter_network_by_matrices(SD_mat, two_loop_mat, 0.8)
+
+    filtered_network = network_factory.from_filtered_import(example, filtered_direct_succession, filtered_out_two_loop, parallel_tuples, self_loop_events)
+
+    bpmn_network = alpha_miner(filtered_network)
+
+    draw_simple_network(bpmn_network, with_numbers=True, auto_show=True,
+                        name='B'+str(case), title='B'+str(case))
+
+
+def lab3_setB_nofilter(case: int):
+    a1_example = import_handler('data/B'+str(case)+'.csv', sep=",")
+
+    network = network_factory.from_importer(a1_example, import_start_end_events=True)
+
+    filtered_network = filter_edges(network, threshold=0)
+    filtered_network = filter_events(filtered_network, threshold=0)
+    filtered_network.delete_filtered_out_items()
+
+    bpmn_network = alpha_miner(filtered_network)
+
+    draw_simple_network(bpmn_network, with_numbers=True, auto_show=True,
+                        name='BB'+str(case), title='BB'+str(case))

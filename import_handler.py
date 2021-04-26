@@ -36,9 +36,13 @@ def from_csv(filename: str, sep=",") -> CsvResult:
         df['End Event'] = pd.to_datetime(df['Complete Timestamp'])
         dfs = df[['Case ID', 'Activity', 'Start Event']]
     except Exception:
-        df['start'] = pd.to_datetime(df['datetime'])
-        dfs = df[['id', 'activity', 'start']]
-        dfs = dfs.rename(columns={'id': 'Case ID', 'activity': 'Activity', 'start': 'Start Event'}, inplace=False)
+        try:
+            df['start'] = pd.to_datetime(df['datetime'])
+            dfs = df[['id', 'activity', 'start']]
+            dfs = dfs.rename(columns={'id': 'Case ID', 'activity': 'Activity', 'start': 'Start Event'}, inplace=False)
+        except Exception:
+            dfs = df[['Case ID', 'Activity', 'Start Timestamp']]
+            dfs = dfs.rename(columns={'Start Timestamp': 'Start Event'}, inplace=False)
 
     ev_counter = dfs.groupby(['Activity']).Activity.count()
 
