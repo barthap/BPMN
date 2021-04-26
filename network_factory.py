@@ -73,7 +73,7 @@ def from_filtered_import(import_res: Result, filtered_direct_succession: Dict[st
                     and_paralleled_with.update(add_tab)
 
             is_in_two_loop_main = src in filtered_out_two_loop
-            in_two_loop_feedback_with = {}
+            in_two_loop_feedback_with = set()
             for outside, out_dict in filtered_out_two_loop.items():
                 if src in out_dict:
                     in_two_loop_feedback_with.update(outside)
