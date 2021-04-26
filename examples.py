@@ -89,6 +89,9 @@ def lab2_ex2():
     filtered_network = filter_events(filtered_network, threshold=700)
     filtered_network.delete_filtered_out_items()
 
+    filtered_network.autodetect_end_nodes()
+    filtered_network.autodetect_start_nodes()
+
     print(filtered_network.are_nodes_parallel('Inform User', 'Test Repair'))
     bpmn_network = alpha_miner(filtered_network)
 
@@ -123,7 +126,7 @@ def loop1():
     net.autodetect_start_nodes()
     net.autodetect_end_nodes()
 
-    net.process_short_loops()
+    net = alpha_miner(net)
 
     draw_simple_network(net, name='self_loop1', title='Self loop')
 
@@ -137,7 +140,7 @@ def loop2():
     net.autodetect_start_nodes()
     net.autodetect_end_nodes()
 
-    net.process_short_loops()
+    net = alpha_miner(net)
 
     draw_simple_network(net, name='short_loop2', title='Short loop (pic 2)')
 
@@ -152,6 +155,6 @@ def loop3():
     net.autodetect_start_nodes()
     net.autodetect_end_nodes()
 
-    net.process_short_loops()
+    net = alpha_miner(net)
 
     draw_simple_network(net, name='loop3', title='Loop (pic 3)')
