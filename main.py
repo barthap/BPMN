@@ -7,8 +7,9 @@ if __name__ == '__main__':
     # examples.lab1_repair_example()      # OK
     # examples.lab2_example()             # OK
     # examples.lab2_ex1()                 # OK
-    #examples.lab2_ex2()                   # OK
-    for i in range (1,10):
+    # examples.lab2_ex2()                   # OK
+
+    for i in range(1, 10):
         # examples.lab2_setA(i)
         examples.lab3_setB(i)
         examples.lab3_setB_nofilter(i)

@@ -1,7 +1,56 @@
 from copy import deepcopy
 
 from bpmn_network import NodeKind, BPMNNetwork, UtilityNode, NodeFunction
-from network import NodeType
+from network import NodeType, Edge
+
+
+def patch_gate_to_gate(net: BPMNNetwork):
+    '''
+        pseudokod brama brama:
+
+        predecessors_of_my_successors = set()
+        for successor in self.successors:
+            predecessors_of_my_successors.update(successor.predecessors)
+
+        if successor.predecessors == predecessors_of_my_successors forall successor in self.successors:
+            merge(predecessors_of_my_successors, temp)
+            split(temp, self.successors)
+        '''
+    causality = net.get_causality()
+    processed_nodes = set()
+    for node, succs in causality.items():
+        if node in processed_nodes or len(succs) <= 1:
+            continue
+        for _n, _s in causality.items():
+            if _n in processed_nodes:
+                break
+            if _n != node and _s == succs:
+                s = set(_s)
+
+                predecessors_of_my_successors = {_n, node}
+                tmp = net.add_node(f'tmp_g2g_{_n.name}')
+                #tmp.type = NodeType.DUMMY
+                tmp.successors = set(s)
+                tmp.predecessors = set(predecessors_of_my_successors)
+                for p in predecessors_of_my_successors:
+                    net.edges[p.name] = {tmp.name: Edge(net, p, tmp)}
+                    p.successors = {tmp}
+                net.edges[tmp.name] = {}
+                for succ in s:
+                    net.edges[tmp.name][succ.name] = Edge(net, tmp, succ)
+                    succ.predecessors.remove(_n)
+                    succ.predecessors.remove(node)
+                    succ.predecessors.add(tmp)
+
+                kind = NodeKind.AND if net.are_all_nodes_parallel(predecessors_of_my_successors) else NodeKind.XOR
+                #net.insert_merge_node_between(predecessors_of_my_successors, tmp, kind)
+
+                #kind = NodeKind.AND if net.are_all_nodes_parallel(s) else NodeKind.XOR
+                #net.insert_split_node_between(tmp, s, kind)
+
+                #net.delete_node_merge_edges(tmp)
+                processed_nodes.update(predecessors_of_my_successors)
+                break
 
 
 def alpha_miner(network: BPMNNetwork) -> BPMNNetwork:
@@ -12,6 +61,7 @@ def alpha_miner(network: BPMNNetwork) -> BPMNNetwork:
     :return: Zwraca nowa siec z bramami
     """
     net = deepcopy(network)
+    patch_gate_to_gate(net)
     net.process_short_loops()
 
     causality = net.get_causality()
@@ -20,17 +70,6 @@ def alpha_miner(network: BPMNNetwork) -> BPMNNetwork:
     # to przechowuje je tutaj, żeby mieć z czego zrobić merge
     parallelisms = list()
 
-    '''
-    pseudokod brama brama:
-    
-    predecessors_of_my_successors = set()
-    for successor in self.successors:
-        predecessors_of_my_successors.update(successor.predecessors)
-    
-    if successor.predecessors == predecessors_of_my_successors forall successor in self.successors:
-        merge(predecessors_of_my_successors, temp)
-        split(temp, self.successors)
-    '''
     # #Wychwytywanie połączeń brama-brama:
     # for event, successions in causality.items():
     #     prevs_tables = []
@@ -84,13 +123,13 @@ def alpha_miner(network: BPMNNetwork) -> BPMNNetwork:
         if not node.is_merge() or (isinstance(node, UtilityNode) and node.function == NodeFunction.LOOP_GATE):
             continue
 
-        prevs = set(node.predecessors) # we need to copy
+        prevs = set(node.predecessors)  # we need to copy
         if prevs in parallelisms:
             net.insert_merge_node_between(prevs, node, kind=NodeKind.AND)
         else:
             net.insert_merge_node_between(prevs, node, kind=NodeKind.XOR)
 
-    dummies = set(d for d in net.nodes.values() if d.type == NodeType.DUMMY)
+    dummies = set(d for d in net.nodes.values() if d.type == NodeType.DUMMY or d.name.startswith('tmp_g2g_'))
     for d in dummies:
         net.delete_node_merge_edges(d)
 
@@ -116,7 +155,7 @@ def update_start_events(net: BPMNNetwork, parallelisms=None):
     net.nodes['start_split_gate'] = gate
 
     for ev in start_events:
-        ev.is_start_node = False    # they're no longer starting events
+        ev.is_start_node = False  # they're no longer starting events
         ev.remove_all_predecessors()
         net.add_edge(gate.name, ev.name, ev.cnt)
 
@@ -137,7 +176,7 @@ def update_end_events(net: BPMNNetwork, parallelisms=None):
     net.nodes[gate.name] = gate
 
     for ev in end_events:
-        ev.is_end_node = False    # they're no longer end events
+        ev.is_end_node = False  # they're no longer end events
         ev.remove_all_successors()
         # ev.cnt is not really correct
         net.add_edge(ev.name, gate.name, ev.cnt)

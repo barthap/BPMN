@@ -146,9 +146,23 @@ class Network:
         self.nodes: Dict[str, Node] = {}
         self.edges: Dict[str, Dict[str, Edge]] = {}
 
-    def add_node(self, name: str, cnt=0, overwrite=False, is_start=False, is_end=False, self_looped=False, and_paralleled_with=None, is_in_two_loop_main=False, in_two_loop_feedback_with=None):
+    def add_node(self,
+                 name: str,
+                 cnt=0,
+                 overwrite=False,
+                 is_start=False,
+                 is_end=False,
+                 self_looped=False,
+                 and_paralleled_with=None,
+                 is_in_two_loop_main=False,
+                 in_two_loop_feedback_with=None) -> Node:
         if overwrite or name not in self.nodes:
-            self.nodes[name] = Node(self, name, cnt, is_start, is_end, is_self_looped=self_looped, and_paralleled_with=and_paralleled_with, is_in_two_loop_main=is_in_two_loop_main, in_two_loop_feedback_with=in_two_loop_feedback_with)
+            self.nodes[name] = Node(self, name, cnt, is_start, is_end,
+                                    is_self_looped=self_looped,
+                                    and_paralleled_with=and_paralleled_with,
+                                    is_in_two_loop_main=is_in_two_loop_main,
+                                    in_two_loop_feedback_with=in_two_loop_feedback_with)
+        return self.nodes[name]
 
     def add_edge(self, src: str, target: str, cnt=0):
         if not (src in self.nodes and target in self.nodes):
