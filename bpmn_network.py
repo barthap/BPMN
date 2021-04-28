@@ -236,10 +236,12 @@ class BPMNNetwork(Network):
         # remove self-succession
         node.remove_successor(node)
 
-        succ1 = next(iter(node.successors))
+        # TODO: Update count for successors
+
+        ss = set(node.successors)
 
         self_cnt = self.edges[node.name][node.name].cnt
-        succ_cnt = self.edges[node.name][succ1.name].cnt
+        #succ_cnt = self.edges[node.name][succ1.name].cnt
 
         gate = UtilityNode(self, name=f'self_loop_{node.name}')
         gate.successors = set(node.successors)
@@ -248,12 +250,17 @@ class BPMNNetwork(Network):
         gate.predecessors = {node}
         self.nodes[gate.name] = gate
 
-        self.edges[node.name] = {gate.name: Edge(self, node, gate, cnt=self_cnt+succ_cnt)}
+        self.edges[node.name] = {gate.name: Edge(self, node, gate, cnt=self_cnt+0)}
         self.edges[gate.name] = {
-            succ1.name: Edge(self, gate, succ1, cnt=succ_cnt),
             node.name: Edge(self, gate, node, cnt=self_cnt)
         }
         node.successors = {gate}
+        node.predecessors.add(gate)
+
+        for s in ss:
+            self.edges[gate.name][s.name] = Edge(self, gate, s, cnt=0)
+            s.predecessors.remove(node)
+            s.predecessors.add(gate)
 
     def build_short_loop(self, node: Node):
         assert node.is_short_loop(), f'Node {node} is not short loop!'
@@ -288,8 +295,13 @@ class BPMNNetwork(Network):
         post_gate.successors = {succ, node}
         node.predecessors = {post_gate}
         node.successors = {pre_gate}
-        pred.successors = {pre_gate}
-        succ.predecessors = {post_gate}
+
+        pred.successors.remove(node)
+        pred.successors.remove(succ)
+        pred.successors.add(pre_gate)
+        succ.predecessors.remove(node)
+        succ.predecessors.remove(pred)
+        succ.predecessors.add(post_gate)
 
         # Edges
         del self.edges[node.name]
@@ -340,7 +352,6 @@ class BPMNNetwork(Network):
         del self.edges[two.name]
         del self.edges[node.name]
 
-
         pre_gate = UtilityNode(self, name=f'twoloop_pre_{node.name}')
         post_gate = UtilityNode(self, name=f'twoloop_post_{node.name}')
         pre_gate.kind = NodeKind.XOR
@@ -349,7 +360,8 @@ class BPMNNetwork(Network):
         self.nodes[post_gate.name] = post_gate
 
         for p in preds:
-            p.successors = {pre_gate}
+            p.successors.remove(two)
+            p.successors.add(pre_gate)
 
         pre_gate.predecessors = set(preds)
         pre_gate.predecessors.add(node)
@@ -361,7 +373,8 @@ class BPMNNetwork(Network):
         post_gate.successors.add(node)
 
         for s in succs:
-            s.predecessors = {post_gate}
+            s.predecessors.remove(two)
+            s.predecessors.add(post_gate)
         node.predecessors = {post_gate}
         node.successors={pre_gate}
 

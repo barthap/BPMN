@@ -222,11 +222,12 @@ class Network:
 
         :param node: Node to delete
         """
-        edge_cnt = self.edges[node.prev().name][node.name].cnt
-        self.edges[node.prev().name][node.next().name] = Edge(self, node.prev(), node.next(), edge_cnt)
+        if len(node.predecessors) > 0 and len(node.successors) > 0:
+            edge_cnt = self.edges[node.prev().name][node.name].cnt
+            self.edges[node.prev().name][node.next().name] = Edge(self, node.prev(), node.next(), edge_cnt)
 
-        node.prev().successors.add(node.next())
-        node.next().predecessors.add(node.prev())
+            node.prev().successors.add(node.next())
+            node.next().predecessors.add(node.prev())
         self.delete_node(node)
 
     def insert_dummy_before(self, node: Node, dummy_name: str) -> Node:
